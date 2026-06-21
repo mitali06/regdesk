@@ -1,0 +1,12 @@
+SAMPLE CREDIT POLICY (synthetic, for demo/eval only)
+
+Debt-to-income: An applicant is eligible for approval only if their total debt-to-income
+(DTI) ratio does not exceed 43%. Applicants between 43% and 50% may be referred for manual
+review with documented compensating factors.
+
+Income verification: Salaried applicants must provide the two most recent pay stubs and a
+W-2. Self-employed applicants must provide two years of tax returns and a year-to-date
+profit-and-loss statement.
+
+Reapplication: An applicant who is denied must wait a cooling-off period of 90 days before
+reapplying, unless the denial reason was a correctable documentation error.

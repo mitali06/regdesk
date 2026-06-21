@@ -1,0 +1,10 @@
+# Render Blueprint — one service, free tier. Commit this, then in Render: New > Blueprint.
+services:
+  - type: web
+    name: regdesk-api
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile
+    plan: free
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # set this in the Render dashboard, never in git

@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+anthropic>=0.39
+pydantic>=2.6
+numpy>=1.26
+# swap for a real vector store in production:
+# pgvector, qdrant-client, or chromadb
+mcp>=1.0
