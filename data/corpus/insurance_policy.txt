@@ -1,0 +1,15 @@
+COMMERCIAL PROPERTY INSURANCE POLICY (synthetic, for demo/eval only)
+
+Coverage: This policy covers direct physical loss to covered property caused by fire,
+windstorm, hail, and water damage, subject to the deductible. Flood and earthquake are
+excluded unless a separate endorsement is purchased.
+
+Deductible: The standard per-occurrence deductible is $5,000. For named-storm events the
+deductible is 2% of the insured value of the affected location.
+
+Claims: Notice of a claim must be given within 60 days of the loss. The insured must
+provide a signed proof of loss within 90 days and must take reasonable steps to protect
+property from further damage.
+
+Cancellation: The insurer may cancel for non-payment with 10 days written notice, or for
+any other reason with 30 days written notice.

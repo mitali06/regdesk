@@ -1,96 +1,84 @@
 # RegDesk — Grounded RAG + Agent for Regulated-Document Workflows
 
-A deployable, evaluation-instrumented assistant that answers questions over messy
+A deployable, **evaluation-instrumented** assistant that answers questions over messy
 regulated documents (credit policies, insurance contracts, clinical guidelines) with
-**citations**, **guardrails**, and a **measured groundedness score** — then exposes the
-same retrieval capability as an **MCP server** any agent can call.
+**citations**, **guardrails**, and **measured retrieval quality** — and lets users
+**upload their own documents** to query. The same retrieval is exposed as an **MCP server**
+any agent can call.
 
 > Built as a Forward-Deployed-Engineer-style artifact: take an ambiguous, regulated,
-> customer-shaped problem, ship a working full-stack system into a real deployment, and
-> prove it works with evals and observability — not a notebook.
+> customer-shaped problem, ship a working full-stack system, and prove it works with evals
+> and observability — not a notebook.
 
-## Why this project exists (the hiring signal)
+## What it does
 
-FDE / applied-AI teams in 2026 screen for **production deployment evidence** and
-**eval literacy** before anything else. This repo is designed to demonstrate, in one
-place, the exact skills that show up in those job descriptions:
+- **Hybrid retrieval** — dense (TF-IDF vectors, cosine) + lexical (BM25), fused with
+  Reciprocal Rank Fusion. Dependency-light (numpy + rank-bm25) so it runs on a 512MB free
+  tier with no model download. Pluggable to API embeddings via `EMBEDDINGS_PROVIDER`.
+- **Grounded, cited answers** — every claim cites a `doc_id`; the agent **refuses** rather
+  than hallucinate when the best semantic match is too weak (tuned, env-configurable).
+- **Document upload** — drop in a `.txt`, `.md`, or `.pdf`; it's chunked and indexed live.
+- **Evals dashboard** — recall@k for dense-only vs hybrid, citation accuracy, refusal
+  correctness, and average latency, served from `/evals` and rendered in the UI.
+- **Observability** — every `/ask` logs latency + token usage as a structured line.
 
-| FDE / Applied-AI requirement        | Where this repo proves it                          |
-|--------------------------------------|----------------------------------------------------|
-| Python production backend            | `backend/app.py` (FastAPI, typed, error handling)  |
-| TypeScript full-stack                | `frontend/` (TS + React chat UI)                   |
-| RAG with retrieval + grounding       | `backend/rag.py`                                   |
-| **Evaluation layer (key signal)**    | `backend/eval/eval_harness.py`                     |
-| AI agent with tool use               | `backend/agent.py`                                 |
-| **MCP server (2026 standard)**       | `backend/mcp_server.py`                            |
-| Cloud + containers (AWS, Docker/K8s) | `infra/`                                           |
-| Observability / cost tracking        | latency + token logging hooks in `app.py`          |
-| Guardrails / safety                  | citation-required answers, refusal on low recall   |
-| Regulated-domain depth (fin/health)  | sample corpus + eval set                            |
-| Customer-facing communication        | `docs/deployment-retro-TEMPLATE.md`                |
+## Skills this repo demonstrates (the hiring signal)
 
-## Architecture
+| FDE / Applied-AI requirement      | Where it lives                                   |
+|-----------------------------------|--------------------------------------------------|
+| Python production backend         | `backend/app.py` (FastAPI, typed, error handling)|
+| TypeScript full-stack             | `frontend/` (React + Vite, polished UI)          |
+| Retrieval engineering             | `backend/retrieval.py` (hybrid + RRF)            |
+| **Eval literacy (key signal)**    | `backend/evals.py`, `/evals`, Evals tab          |
+| AI agent + guardrails             | `backend/agent.py` (cite-or-refuse)              |
+| MCP server (2026 standard)        | `backend/mcp_server.py`                          |
+| Cloud + containers                | `infra/` (Dockerfile, render.yaml, AWS notes)    |
+| Tests + CI                        | `tests/`, `.github/workflows/ci.yml`             |
 
-```
-                ┌─────────────┐     /ask      ┌──────────────────────┐
-  TS React UI ──►   FastAPI    ├──────────────►   Agent (Claude)      │
-  (frontend/)  ◄──┤  backend   │◄──────────────┤  tool-use loop       │
-                └──────┬──────┘   answer+cites └──────────┬───────────┘
-                       │                                   │ retrieve()
-                       │                          ┌────────▼─────────┐
-                       │                          │  RAG: chunk →     │
-                       │                          │  embed → vector   │
-                       │                          │  store → rerank   │
-                       │                          └──────────────────┘
-            ┌──────────▼───────────┐     same retrieve() exposed as a tool
-            │  MCP server          │◄───────────────────────────────────►  any MCP client
-            │  (backend/mcp_server)│
-            └──────────────────────┘
-```
+## API
 
-## Evaluation methodology (read this part in interviews)
-
-Every answer is scored on a labeled eval set (`backend/eval/dataset.sample.jsonl`):
-
-- **Groundedness / faithfulness** — is every claim supported by a retrieved chunk?
-- **Citation accuracy** — do the cited chunks actually contain the answer?
-- **Retrieval recall@k** — did we retrieve the gold chunk at all?
-- **Refusal correctness** — does the system decline when recall is low (no hallucinating)?
-- **Cost & latency** — tokens and p50/p95 per query, tracked over time.
-
-Run: `python backend/eval/eval_harness.py` → prints a scorecard you can paste into your
-write-up. The point is not a high score; it is that you can *measure and reason about* one.
+| Method | Path      | Purpose                                            |
+|--------|-----------|----------------------------------------------------|
+| GET    | `/`       | service info                                       |
+| GET    | `/health` | liveness + chunk count                             |
+| POST   | `/ask`    | grounded answer with scored citations (or refusal) |
+| POST   | `/upload` | ingest a .txt/.md/.pdf into the live corpus        |
+| GET    | `/evals`  | scorecard JSON                                     |
+| GET    | `/docs`   | interactive Swagger UI (built into FastAPI)        |
 
 ## Quickstart
 
 ```bash
-# backend
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-...           # do NOT commit this
-uvicorn backend.app:app --reload
+pip install -r requirements.txt -r requirements-dev.txt
+pytest -q                              # 8 tests pass, fully offline
+uvicorn backend.app:app --reload       # http://localhost:8000/docs
 
-# frontend
-cd frontend && npm install && npm run dev
+# frontend (separate terminal)
+cd frontend && npm install && npm run dev   # http://localhost:5173
 
-# evals
+# evals from the CLI
 python backend/eval/eval_harness.py
 ```
 
+Set `ANTHROPIC_API_KEY` for real Claude answers; without it the agent returns a clearly
+labeled stub so everything still runs.
+
+## Honest notes (read these in interviews)
+
+- On the bundled 3-document sample corpus, dense and hybrid retrieval both hit ~100% recall
+  because the domains are cleanly separated. The hybrid advantage shows on larger, noisier
+  corpora — upload more documents and re-run `/evals` to watch the numbers move.
+- The refusal threshold is tuned on the sample set and is env-configurable
+  (`REFUSAL_MIN_DENSE`). "Right document retrieved but answer absent" refusal is the LLM's
+  job and needs the API key.
+- Uploaded docs live in memory and reset on restart (fine for a demo; swap in a persistent
+  vector store as the next step).
+
 ## Deploy
 
-See `infra/deploy-aws.md` for a containerized AWS path (ECS/Fargate or App Runner) and
-`infra/docker-compose.yml` for local. Once deployed, fill in `docs/deployment-retro-TEMPLATE.md`
-and link it from your resume — that retro is the FDE story.
-
-## Roadmap / TODOs (good first commits)
-
-- [ ] Swap the in-memory vector store for pgvector or a managed store
-- [ ] Add a reranker and measure recall@k before/after
-- [ ] Add per-tenant data isolation (regulated-data residency angle)
-- [ ] Wire structured-output validation (Pydantic) on the agent response
-- [ ] Add Langfuse for traces + eval dashboards
-- [ ] Publish the MCP server to a registry
+See `DEPLOY.md` for GitHub push, Render (free), and AWS App Runner paths, plus turning the
+deployment into resume assets (demo video, deployment retro).
 
 ## License
 

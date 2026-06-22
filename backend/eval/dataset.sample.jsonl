@@ -1,4 +1,11 @@
 {"question": "What is the maximum debt-to-income ratio allowed for an approved applicant?", "gold_doc_id": "credit_policy.txt"}
-{"question": "Which documents are required to verify income for self-employed borrowers?", "gold_doc_id": "credit_policy.txt"}
-{"question": "What is the cooling-off period before a denied applicant can reapply?", "gold_doc_id": "credit_policy.txt"}
-{"question": "What is the company's policy on cryptocurrency as collateral?", "gold_doc_id": null}
+{"question": "What documents must self-employed borrowers provide to verify income?", "gold_doc_id": "credit_policy.txt"}
+{"question": "What is the minimum FICO score for standard credit products?", "gold_doc_id": "credit_policy.txt"}
+{"question": "How long must a denied applicant wait before reapplying?", "gold_doc_id": "credit_policy.txt"}
+{"question": "What is the deductible for a named-storm event under the property policy?", "gold_doc_id": "insurance_policy.txt"}
+{"question": "Within how many days must notice of an insurance claim be given?", "gold_doc_id": "insurance_policy.txt"}
+{"question": "Are flood losses covered by the commercial property policy?", "gold_doc_id": "insurance_policy.txt"}
+{"question": "At what HbA1c level is type 2 diabetes diagnosed?", "gold_doc_id": "clinical_guideline.txt"}
+{"question": "How often should patients with prediabetes be rescreened?", "gold_doc_id": "clinical_guideline.txt"}
+{"question": "What is the company policy on cryptocurrency as loan collateral?", "gold_doc_id": null}
+{"question": "Does the insurance policy cover cyber liability?", "gold_doc_id": null}

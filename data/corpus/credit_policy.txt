@@ -1,12 +1,15 @@
-SAMPLE CREDIT POLICY (synthetic, for demo/eval only)
+CONSUMER CREDIT POLICY (synthetic, for demo/eval only)
 
 Debt-to-income: An applicant is eligible for approval only if their total debt-to-income
 (DTI) ratio does not exceed 43%. Applicants between 43% and 50% may be referred for manual
-review with documented compensating factors.
+review with documented compensating factors such as significant cash reserves.
 
 Income verification: Salaried applicants must provide the two most recent pay stubs and a
 W-2. Self-employed applicants must provide two years of tax returns and a year-to-date
 profit-and-loss statement.
 
+Credit score: A minimum FICO score of 620 is required for standard products. Scores between
+580 and 619 are eligible only for secured products with a 20% down payment.
+
 Reapplication: An applicant who is denied must wait a cooling-off period of 90 days before
-reapplying, unless the denial reason was a correctable documentation error.
+reapplying, unless the denial was due to a correctable documentation error.

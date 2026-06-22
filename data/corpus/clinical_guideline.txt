@@ -1,0 +1,13 @@
+CLINICAL GUIDELINE: TYPE 2 DIABETES SCREENING (synthetic, for demo/eval only)
+
+Screening eligibility: Screen asymptomatic adults aged 35 to 70 who are overweight or obese
+(BMI 25 or higher). Screen earlier for patients with a first-degree relative with diabetes
+or a history of gestational diabetes.
+
+Diagnostic thresholds: A fasting plasma glucose of 126 mg/dL or higher, or an HbA1c of 6.5%
+or higher, on two separate occasions confirms a diagnosis of type 2 diabetes.
+
+Rescreening: Patients with normal results should be rescreened at least every 3 years.
+Patients with prediabetes (HbA1c 5.7% to 6.4%) should be rescreened annually.
+
+Referral: Refer to endocrinology if HbA1c remains above 9% despite two oral agents.
