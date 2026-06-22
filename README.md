@@ -41,6 +41,7 @@ any agent can call.
 |--------|-----------|----------------------------------------------------|
 | GET    | `/`       | service info                                       |
 | GET    | `/health` | liveness + chunk count                             |
+| GET    | `/documents` | list indexed source documents (for the UI)      |
 | POST   | `/ask`    | grounded answer with scored citations (or refusal) |
 | POST   | `/upload` | ingest a .txt/.md/.pdf into the live corpus        |
 | GET    | `/evals`  | scorecard JSON                                     |
@@ -62,7 +63,8 @@ python backend/eval/eval_harness.py
 ```
 
 Set `ANTHROPIC_API_KEY` for real Claude answers; without it the agent returns a clearly
-labeled stub so everything still runs.
+labeled stub so everything still runs. The frontend reads optional `VITE_GITHUB_URL` and
+`VITE_LINKEDIN_URL` to show portfolio links in the footer (set them in Vercel).
 
 ## Honest notes (read these in interviews)
 

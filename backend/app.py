@@ -71,6 +71,16 @@ def health() -> dict:
     return {"status": "ok", "chunks_indexed": len(retriever.chunks)}
 
 
+@app.get("/documents")
+def documents() -> dict:
+    """List the source documents currently indexed (sample corpus + uploads)."""
+    counts: dict[str, int] = {}
+    for ch in retriever.chunks:
+        name = ch.doc_id.split("#")[0]
+        counts[name] = counts.get(name, 0) + 1
+    return {"documents": [{"name": n, "chunks": c} for n, c in sorted(counts.items())]}
+
+
 @app.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest) -> AskResponse:
     if not req.question.strip():

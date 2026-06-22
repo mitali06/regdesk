@@ -71,3 +71,9 @@ def test_api_upload_adds_chunks():
 def test_api_evals_endpoint():
     card = client.get("/evals").json()
     assert "recall_at_k" in card and card["citation_accuracy"] is not None
+
+
+def test_api_documents_lists_sample_corpus():
+    docs = client.get("/documents").json()["documents"]
+    names = {d["name"] for d in docs}
+    assert "credit_policy.txt" in names and all(d["chunks"] >= 1 for d in docs)
