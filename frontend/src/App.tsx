@@ -64,6 +64,11 @@ export default function App() {
   const [view, setView] = useState<View>("ask");
   const [health, setHealth] = useState<"live" | "wake" | "unknown">("unknown");
   const [docCount, setDocCount] = useState<number | null>(null);
+  const [askKey, setAskKey] = useState(0);
+  const [seed, setSeed] = useState<string | null>(null);
+  const [topQ, setTopQ] = useState("");
+  function newQuery() { setSeed(null); setAskKey(k => k + 1); setView("ask"); }
+  function runSearch() { const t = topQ.trim(); if (!t) return; setSeed(t); setAskKey(k => k + 1); setView("ask"); setTopQ(""); }
 
   useEffect(() => {
     fetch(`${API}/health`)
@@ -101,16 +106,19 @@ export default function App() {
       <div className="main">
         <div className="topbar">
           <div className="crumb">RegDesk / <b>{crumb}</b></div>
-          <div className="topsearch">{I.search} Search documents &amp; answers…</div>
+          <form className="topsearch" onSubmit={e => { e.preventDefault(); runSearch(); }}>
+            {I.search}
+            <input value={topQ} onChange={e => setTopQ(e.target.value)} placeholder="Ask across your documents…" aria-label="Ask across your documents" />
+          </form>
           <div className={`status ${health === "live" ? "live" : "wake"}`}>
             <span className="dot" />
             {health === "live" ? "API live" : health === "wake" ? "API waking…" : "Connecting…"}
           </div>
-          <button className="ghostbtn" onClick={() => setView("ask")}>{I.plus} New query</button>
+          <button className="ghostbtn" onClick={newQuery}>{I.plus} New query</button>
         </div>
 
         <div className="scroll">
-          {view === "ask" && <Ask />}
+          {view === "ask" && <Ask key={askKey} seed={seed} />}
           {view === "docs" && <Documents onCount={setDocCount} />}
           {view === "evals" && <Evals />}
         </div>
@@ -141,8 +149,8 @@ function TrustStrip() {
 }
 
 /* ---------- Ask ---------- */
-function Ask() {
-  const [q, setQ] = useState("");
+function Ask({ seed }: { seed?: string | null }) {
+  const [q, setQ] = useState(seed ?? "");
   const [hybrid, setHybrid] = useState(true);
   const [resp, setResp] = useState<AskResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -164,6 +172,8 @@ function Ask() {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally { setLoading(false); }
   }
+
+  useEffect(() => { if (seed) ask(seed); /* run seeded question once on mount */ }, []);
 
   return (
     <section className="view">
