@@ -18,7 +18,7 @@ type Scorecard = {
 type DocItem = { name: string; chunks: number };
 type View = "ask" | "docs" | "evals";
 
-const pct = (n: number | null) => (n == null ? "—" : `${Math.round(n * 100)}%`);
+const pct = (n: number | null | undefined) => (n == null ? "—" : `${Math.round(n * 100)}%`);
 const docName = (id: string) => id.split("#")[0];
 const docDomain = (name: string) => {
   const n = name.toLowerCase();
@@ -32,8 +32,8 @@ const EXAMPLES = [
   "What is the maximum debt-to-income ratio for approval?",
   "What is the deductible for a named-storm event?",
   "At what HbA1c level is type 2 diabetes diagnosed?",
-  "Does the insurance policy cover cyber liability?",
 ];
+const REFUSE_EXAMPLE = "Does the insurance policy cover cyber liability?";
 
 /* ---------- icons ---------- */
 const I = {
@@ -49,9 +49,12 @@ const I = {
   check: <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   ban: <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/><path d="M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
   spark: <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  warn: <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 4l-7 12a2 2 0 001.7 3h14a2 2 0 001.7-3l-7-12a2 2 0 00-3.4 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+  bot: <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/><path d="M9.5 9a2.5 2.5 0 113.5 2.3c-.7.3-1 .8-1 1.7M12 16h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  layers: <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h8l3 3v6H5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M9 9h12v11H9z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
 };
 
-const NAV: { id: View; label: string; icon: JSX.Element; count?: number }[] = [
+const NAV: { id: View; label: string; icon: JSX.Element }[] = [
   { id: "ask", label: "Ask", icon: I.ask },
   { id: "docs", label: "Documents", icon: I.doc },
   { id: "evals", label: "Evaluations", icon: I.chart },
@@ -116,6 +119,27 @@ export default function App() {
   );
 }
 
+/* ---------- Trust strip (live from /evals) ---------- */
+function TrustStrip() {
+  const [card, setCard] = useState<Scorecard | null>(null);
+  useEffect(() => {
+    fetch(`${API}/evals`).then(r => (r.ok ? r.json() : null)).then(setCard).catch(() => {});
+  }, []);
+  const stats = [
+    { v: pct(card?.citation_accuracy), k: <>cited the right source<br />{card ? `(${card.answerable} answerable questions)` : " "}</> },
+    { v: pct(card?.refusal_correctness), k: <>correctly refused<br />{card ? `(${card.unanswerable} unanswerable questions)` : " "}</> },
+    { v: card?.avg_latency_ms != null ? `${card.avg_latency_ms} ms` : "—", k: <>avg response time<br />measured this run</> },
+    { v: "0", k: <>answers from the<br />open web — by design</> },
+  ];
+  return (
+    <div className="trust">
+      {stats.map((s, i) => (
+        <div className="stat" key={i}><div className="v">{s.v}</div><div className="k">{s.k}</div></div>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- Ask ---------- */
 function Ask() {
   const [q, setQ] = useState("");
@@ -143,23 +167,24 @@ function Ask() {
 
   return (
     <section className="view">
+      {/* HERO */}
       <div className="hero">
-        <span className="tag"><span className="d2" /> Retrieval-grounded · Citation-enforced</span>
-        <h1>Ask regulated documents. Get answers you can <span className="g">actually trust.</span></h1>
-        <p>RegDesk retrieves the exact passage, answers with a citation you can check, and refuses rather than guess when the documents don't contain the answer.</p>
-        <div className="pipe">
-          <div className="s"><b>1</b> Ask or upload a document</div>
-          <div className="s"><b>2</b> Hybrid search finds the passage</div>
-          <div className="s"><b>3</b> Cited answer — or honest refusal</div>
-        </div>
+        <span className="tag"><span className="d2" /> For credit, insurance, and clinical teams — sensitive documents, high-stakes answers</span>
+        <h1>Exact answers from your most <span className="g">sensitive documents</span> — sourced, every time.</h1>
+        <p className="herosub">RegDesk is built for the documents where a confident guess is a liability — credit policies, insurance contracts, and clinical guidelines. It does two things well: <b>retrieve the precise rule or figure from a single critical document</b>, and <b>make cohesive sense of what a set of documents says together</b> — citing every claim back to its source.</p>
+        <TrustStrip />
       </div>
 
+      {/* FUNCTIONAL ASK */}
       <div className="askcard">
-        <p className="lbl">Try one of these against the loaded documents</p>
+        <p className="lbl">Try it against the loaded documents</p>
         <div className="chips">
           {EXAMPLES.map((ex, i) => (
             <button key={i} className="chip-q" onClick={() => ask(ex)}>{ex}</button>
           ))}
+          <button className="chip-q refuse" onClick={() => ask(REFUSE_EXAMPLE)} title="See it refuse a question the documents can't answer">
+            {REFUSE_EXAMPLE}
+          </button>
         </div>
         <div className="inputrow">
           <div className="inputwrap">
@@ -219,6 +244,56 @@ function Ask() {
         </div>
       )}
 
+      {/* WHY IT MATTERS */}
+      <div className="why">
+        <p className="why-lbl">Why it matters</p>
+        <p>In regulated work, a decision turns on what a <b>specific clause actually says</b> — or on what a <b>set of documents collectively requires</b>. A general chatbot answers from memory and can't show its work: fine for brainstorming, unacceptable when the output drives an underwriting decision, a claim, or a clinical step. RegDesk treats the document as the source of truth — it answers <b>only</b> from what's in your documents, cites the passage, and refuses when they don't cover the question.</p>
+      </div>
+
+      {/* TWO JOBS */}
+      <h2 className="sechead">Two jobs, one source of truth</h2>
+      <p className="secsub">Whether the answer lives in one paragraph of one document or has to be assembled across several, every claim stays traceable to where it came from.</p>
+      <div className="jobs">
+        <div className="job">
+          <div className="job-ic">{I.search}</div>
+          <div className="job-role">Pinpoint retrieval</div>
+          <h3>Find the exact answer in one document</h3>
+          <p>Pull a specific rule, threshold, or clause out of a long, dense document — and see the exact passage it came from, not a paraphrase.</p>
+          <div className="demo">
+            <div className="demo-q"><span>Question</span>"What's the maximum debt-to-income ratio for approval?"</div>
+            <div className="demo-a">The maximum DTI ratio is <b>43%</b> for qualified mortgages; above it requires manual underwriting.<sup>[1]</sup></div>
+            <div className="citerow"><span className="cite">credit_policy_2024.pdf · p.12</span></div>
+            <div className="prov">Grounded in <b>1 source</b> · exact passage shown</div>
+          </div>
+        </div>
+        <div className="job">
+          <div className="job-ic">{I.layers}</div>
+          <div className="job-role">Cohesive synthesis</div>
+          <h3>Make sense of a set of documents</h3>
+          <p>Ask what several documents say together. RegDesk assembles the answer across sources — without losing which claim came from which document.</p>
+          <div className="demo">
+            <div className="demo-q"><span>Question</span>"What's a homeowner's total exposure for a named storm?"</div>
+            <div className="demo-a">The named-storm deductible is <b>2% of dwelling value</b><sup>[1]</sup>, separate from the standard $1,000 deductible<sup>[2]</sup>; flood damage is excluded and needs a separate policy.<sup>[3]</sup></div>
+            <div className="citerow"><span className="cite">homeowners_insurance.md · §4</span><span className="cite">§2.1</span><span className="cite">exclusions · §7</span></div>
+            <div className="prov">Synthesized across <b>3 passages</b> · each claim cited</div>
+          </div>
+        </div>
+      </div>
+
+      {/* COMPARISON */}
+      <h2 className="sechead">The same question, two kinds of AI</h2>
+      <p className="secsub">Toggle between a question the documents <i>can</i> answer and one they <i>can't</i>. Watch where a generic assistant goes wrong — and what RegDesk does instead.</p>
+      <Comparison />
+
+      {/* DEPLOY */}
+      <div className="deploy">
+        <h3>Built to run where the sensitive data already lives</h3>
+        <p>Because the documents are sensitive, RegDesk runs inside your own infrastructure — files and questions never leave your boundary. It ships as an API and an MCP server, Dockerized and CI-tested, so it drops into an underwriting, claims, or review workflow and can be versioned and audited like any other service.</p>
+        <div className="deploy-row">
+          {["Your infra · your data", "REST API", "MCP server", "Docker", "CI-tested", "Self-grading evals"].map(t => <span className="t" key={t}>{t}</span>)}
+        </div>
+      </div>
+
       <div className="foot">
         <span>Portfolio project by <b>Mitali Kasurde</b> — a deployable, evaluation-instrumented RAG + agent system (FastAPI · React · hybrid retrieval · Claude).</span>
         <span className="links">
@@ -228,6 +303,70 @@ function Ask() {
         </span>
       </div>
     </section>
+  );
+}
+
+/* ---------- Comparison (illustrative) ---------- */
+function Comparison() {
+  const [c, setC] = useState<"a" | "u">("a");
+  const answerable = c === "a";
+  return (
+    <div className="cmpwrap">
+      <div className="cmptabs">
+        <button className={`cmptab${answerable ? " active" : ""}`} onClick={() => setC("a")}>Answerable question</button>
+        <button className={`cmptab${!answerable ? " active" : ""}`} onClick={() => setC("u")}>Unanswerable question</button>
+      </div>
+      <div className="qbar">
+        <span className="ql">Question</span>
+        <span className="qt">{answerable
+          ? "“What is the maximum debt-to-income ratio for loan approval?”"
+          : "“Does the insurance policy cover cyber liability?”"}</span>
+      </div>
+      <div className="cmpgrid">
+        <div className="col generic">
+          <div className="colhead generic">
+            <div className="av">{I.bot}</div>
+            <div><div className="nm">Generic AI assistant</div><div className="sb">answers from training data</div></div>
+          </div>
+          <span className="badge warn">{I.warn} {answerable ? "Confident — but unverifiable" : "Confident — and wrong"}</span>
+          {answerable ? (
+            <div className="ans-c gen">Generally, lenders look for a debt-to-income ratio below <b>36%</b>, though some programs allow up to about <b>43–50%</b> depending on the lender and loan type.<sup className="qmark">[?]</sup></div>
+          ) : (
+            <div className="ans-c gen">Yes — most modern policies include cyber liability coverage, typically covering data breaches and certain third-party claims up to your policy limits.<sup className="qmark">[?]</sup></div>
+          )}
+          <div className="flaw"><b>The problem:</b> {answerable
+            ? "no source, hedged ranges, and nothing to trace. In a compliance setting this is a guess dressed up as an answer."
+            : "the loaded policy says nothing about cyber liability — so this is fabricated. A generic assistant will still confidently produce an answer."}</div>
+        </div>
+        <div className="col regdesk">
+          <div className="colhead regdesk">
+            <div className="av">{I.shield}</div>
+            <div><div className="nm">RegDesk</div><div className="sb">answers from your documents only</div></div>
+          </div>
+          {answerable
+            ? <span className="badge ok">{I.check} Grounded &amp; cited</span>
+            : <span className="badge refused">{I.ban} Refused — not in the documents</span>}
+          {answerable ? (
+            <>
+              <div className="ans-c">The maximum debt-to-income ratio for loan approval is <b>43%</b> for qualified mortgages; applications above it require manual underwriting with documented compensating factors.<sup className="cmark">[1]</sup></div>
+              <div className="src">
+                <div className="top"><code>credit_policy_2024.pdf · p.12</code><span className="matchpct">match 0.913</span></div>
+                <div className="snip">"…a maximum debt-to-income ratio of 43% applies to all qualified mortgage products. Applications exceeding this limit must be escalated to manual underwriting…"</div>
+              </div>
+              <div className="provc">Grounded in <b>3 indexed documents</b> · <b>0</b> from the open web</div>
+              <div className="winline">{I.check}<span>One exact number, traceable to the passage it came from.</span></div>
+            </>
+          ) : (
+            <>
+              <div className="ans-c">I can't answer that from the loaded documents — none of them address cyber liability coverage. Rather than guess, RegDesk abstains.</div>
+              <div className="provc">Best semantic match <b>0.21</b> · below the <b>0.28</b> refusal threshold → no answer generated</div>
+              <div className="winline">{I.check}<span>Refusing a question it can't ground is the feature, not a failure.</span></div>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="cmpnote">Illustrative — the “Generic AI assistant” column is a representative example of typical ungrounded behavior, shown for contrast.</div>
+    </div>
   );
 }
 
