@@ -52,6 +52,7 @@ const I = {
   warn: <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 4l-7 12a2 2 0 001.7 3h14a2 2 0 001.7-3l-7-12a2 2 0 00-3.4 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
   bot: <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/><path d="M9.5 9a2.5 2.5 0 113.5 2.3c-.7.3-1 .8-1 1.7M12 16h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>,
   layers: <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h8l3 3v6H5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M9 9h12v11H9z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+  menu: <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
 };
 
 const NAV: { id: View; label: string; icon: JSX.Element }[] = [
@@ -77,25 +78,29 @@ export default function App() {
       .catch(() => setHealth("wake"));
   }, []);
 
+  const [navOpen, setNavOpen] = useState(false);
+  const go = (v: View) => { setView(v); setNavOpen(false); };
   const crumb = NAV.find(n => n.id === view)!.label;
 
   return (
-    <div className="app">
-      <aside className="side">
+    <div className={`app${navOpen ? " nav-open" : ""}`}>
+      <a className="skip" href="#main">Skip to content</a>
+      <div className="scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />
+      <aside className="side" aria-label="Primary navigation">
         <div className="logo">
           <div className="logomark">{I.shield}</div>
           <div><b>RegDesk</b><div className="sub">Grounded answers, cited</div></div>
         </div>
         <div className="navlabel">Workspace</div>
         {NAV.map(n => (
-          <button key={n.id} className={`nav${view === n.id ? " active" : ""}`} onClick={() => setView(n.id)}>
+          <button key={n.id} className={`nav${view === n.id ? " active" : ""}`} aria-current={view === n.id ? "page" : undefined} onClick={() => go(n.id)}>
             {n.icon} {n.label}
             {n.id === "docs" && docCount != null && <span className="count">{docCount}</span>}
           </button>
         ))}
         <div className="navlabel">Resources</div>
         <a className="nav" href={`${API}/docs`} target="_blank" rel="noreferrer">{I.api} API reference</a>
-        <button className="nav" onClick={() => setView("evals")}>{I.info} How it works</button>
+        <button className="nav" onClick={() => go("evals")}>{I.info} How it works</button>
         <div className="spacer" />
         <div className="userbox">
           <div className="avatar">MK</div>
@@ -103,18 +108,19 @@ export default function App() {
         </div>
       </aside>
 
-      <div className="main">
+      <main className="main" id="main">
         <div className="topbar">
+          <button className="hamburger" aria-label="Open navigation" aria-expanded={navOpen} onClick={() => setNavOpen(o => !o)}>{I.menu}</button>
           <div className="crumb">RegDesk / <b>{crumb}</b></div>
           <form className="topsearch" onSubmit={e => { e.preventDefault(); runSearch(); }}>
             {I.search}
             <input value={topQ} onChange={e => setTopQ(e.target.value)} placeholder="Ask across your documents…" aria-label="Ask across your documents" />
           </form>
-          <div className={`status ${health === "live" ? "live" : "wake"}`}>
+          <div className={`status ${health === "live" ? "live" : "wake"}`} role="status" aria-live="polite">
             <span className="dot" />
             {health === "live" ? "API live" : health === "wake" ? "API waking…" : "Connecting…"}
           </div>
-          <button className="ghostbtn" onClick={newQuery}>{I.plus} New query</button>
+          <button className="ghostbtn" onClick={newQuery} aria-label="Start a new query">{I.plus} <span className="lbl-txt">New query</span></button>
         </div>
 
         <div className="scroll">
@@ -122,7 +128,7 @@ export default function App() {
           {view === "docs" && <Documents onCount={setDocCount} />}
           {view === "evals" && <Evals />}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -199,6 +205,7 @@ function Ask({ seed }: { seed?: string | null }) {
         <div className="inputrow">
           <div className="inputwrap">
             <textarea value={q} onChange={e => setQ(e.target.value)}
+              aria-label="Your question about the loaded documents"
               placeholder="…or type your own question about the loaded documents"
               onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) ask(); }} />
           </div>
@@ -207,17 +214,24 @@ function Ask({ seed }: { seed?: string | null }) {
           </button>
         </div>
         <div className="ctrls">
-          <label className="switch" title="Hybrid combines semantic + keyword search">
-            <span className={`track${hybrid ? " on" : ""}`} onClick={() => setHybrid(h => !h)} />
+          <button type="button" className="switch" role="switch" aria-checked={hybrid} onClick={() => setHybrid(h => !h)} title="Hybrid combines semantic + keyword search">
+            <span className={`track${hybrid ? " on" : ""}`} />
             Hybrid retrieval (dense + keyword)
-          </label>
+          </button>
           <span>· Refuses below the semantic-match threshold</span>
         </div>
         {error && <div className="err">{error} — the API may be waking up (free tier sleeps after ~15 min). Give it ~30s and try again.</div>}
       </div>
 
+      {loading && (
+        <div className="answer skel" aria-hidden="true">
+          <div className="ans-head"><span className="skbox" /><span className="skline w30" /></div>
+          <div className="ans-body"><span className="skline" /><span className="skline" /><span className="skline w70" /><div className="skmeta"><span className="skpill" /><span className="skpill" /><span className="skpill" /></div></div>
+        </div>
+      )}
+
       {resp && (
-        <div className="answer">
+        <div className="answer" aria-live="polite">
           <div className="ans-head">
             <div className="ic">{I.spark}</div>
             <h3>Answer</h3>
@@ -322,9 +336,9 @@ function Comparison() {
   const answerable = c === "a";
   return (
     <div className="cmpwrap">
-      <div className="cmptabs">
-        <button className={`cmptab${answerable ? " active" : ""}`} onClick={() => setC("a")}>Answerable question</button>
-        <button className={`cmptab${!answerable ? " active" : ""}`} onClick={() => setC("u")}>Unanswerable question</button>
+      <div className="cmptabs" role="tablist" aria-label="Example question type">
+        <button role="tab" aria-selected={answerable} className={`cmptab${answerable ? " active" : ""}`} onClick={() => setC("a")}>Answerable question</button>
+        <button role="tab" aria-selected={!answerable} className={`cmptab${!answerable ? " active" : ""}`} onClick={() => setC("u")}>Unanswerable question</button>
       </div>
       <div className="qbar">
         <span className="ql">Question</span>
@@ -440,10 +454,12 @@ function Documents({ onCount }: { onCount: (n: number) => void }) {
           </div>
         ))}
         {docs && docs.length === 0 && <div className="empty">No documents indexed yet.</div>}
-        {!docs && !error && <div className="empty">Loading documents…</div>}
+        {!docs && !error && [0, 1, 2].map(i => (
+          <div className="docrow skel" key={i} aria-hidden="true"><span className="skbox" /><div style={{ flex: 1 }}><span className="skline w40" /><span className="skline w20" /></div></div>
+        ))}
         <label className="uploadzone">
           Drop a <b>.pdf, .md or .txt</b> here, or click to browse — it's chunked and searchable in seconds
-          <input type="file" accept=".txt,.md,.pdf" onChange={onFile} />
+          <input type="file" accept=".txt,.md,.pdf" onChange={onFile} aria-label="Upload a .pdf, .md, or .txt document" />
         </label>
         {uploadMsg && <div className="note">{uploadMsg}</div>}
         {error && <div className="err">{error}</div>}
@@ -483,6 +499,12 @@ function Evals() {
       </div>
 
       {error && <div className="err">{error} — the API may be waking up; try again in ~30s.</div>}
+
+      {loading && !card && (
+        <div className="grid3" aria-hidden="true">
+          {[0, 1, 2].map(i => <div className="metric skel" key={i}><span className="skline w40" style={{ height: 26 }} /><span className="skline w70" /></div>)}
+        </div>
+      )}
 
       {card && (
         <>
