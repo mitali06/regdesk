@@ -283,3 +283,7 @@ button.switch{background:none;border:0;padding:0;cursor:pointer;font:inherit;col
   .hero{padding:24px 20px}
   .hero h1{font-size:25px}
 }
+
+/* v0.6.1: brand logo — single solid indigo quote mark */
+.logomark{background:#4b4fb0;box-shadow:0 8px 20px rgba(75,79,176,.34)}
+.logomark svg{width:22px;height:22px}

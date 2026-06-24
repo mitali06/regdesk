@@ -53,6 +53,7 @@ const I = {
   bot: <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/><path d="M9.5 9a2.5 2.5 0 113.5 2.3c-.7.3-1 .8-1 1.7M12 16h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>,
   layers: <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h8l3 3v6H5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M9 9h12v11H9z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
   menu: <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
+  logo: <svg viewBox="0 0 32 32" fill="none"><path d="M9.6 11h4.1v4.1c0 2.4-1.4 3.9-3.8 4.4l-.5-1.7c1.1-.3 1.7-.9 1.8-1.8H9.6z" fill="#fff"/><path d="M16.3 11h4.1v4.1c0 2.4-1.4 3.9-3.8 4.4l-.5-1.7c1.1-.3 1.7-.9 1.8-1.8h-1.6z" fill="#fff"/><path d="M9.6 23h12.8" stroke="#c9ccff" strokeWidth="1.9" strokeLinecap="round"/></svg>,
 };
 
 const NAV: { id: View; label: string; icon: JSX.Element }[] = [
@@ -88,7 +89,7 @@ export default function App() {
       <div className="scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />
       <aside className="side" aria-label="Primary navigation">
         <div className="logo">
-          <div className="logomark">{I.shield}</div>
+          <div className="logomark">{I.logo}</div>
           <div><b>RegDesk</b><div className="sub">Grounded answers, cited</div></div>
         </div>
         <div className="navlabel">Workspace</div>
